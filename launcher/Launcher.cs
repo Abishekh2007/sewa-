@@ -5,7 +5,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 
 class Launcher
@@ -32,14 +31,19 @@ class Launcher
             }
         }
 
-        int port = FreePort(4173);
-        string url = "http://localhost:" + port + "/";
-        var listener = new HttpListener();
-        listener.Prefixes.Add(url);
-        try { listener.Start(); }
-        catch (Exception e)
+        // Try successive ports; another instance (or app) may already hold one.
+        HttpListener listener = null;
+        string url = null;
+        for (int port = 4173; port < 4193 && listener == null; port++)
         {
-            Console.WriteLine("Could not start local server: " + e.Message);
+            var l = new HttpListener();
+            l.Prefixes.Add("http://localhost:" + port + "/");
+            try { l.Start(); listener = l; url = "http://localhost:" + port + "/"; }
+            catch { l.Close(); }
+        }
+        if (listener == null)
+        {
+            Console.WriteLine("Could not start local server on ports 4173-4192.");
             Console.ReadLine();
             return 1;
         }
@@ -62,15 +66,6 @@ class Launcher
         var p = Process.Start(new ProcessStartInfo("cmd.exe", "/c " + cmd) { WorkingDirectory = dir, UseShellExecute = false });
         p.WaitForExit();
         return p.ExitCode;
-    }
-
-    static int FreePort(int start)
-    {
-        for (int p = start; p < start + 50; p++)
-        {
-            try { var l = new TcpListener(IPAddress.Loopback, p); l.Start(); l.Stop(); return p; } catch { }
-        }
-        return start;
     }
 
     static void Serve(HttpListenerContext ctx)
