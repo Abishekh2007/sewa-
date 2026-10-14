@@ -6,6 +6,9 @@ import { can } from '../engine/actions';
 import { HAZARD_LABEL, SOURCE_LABEL, VEHICLE_LABEL } from '../types';
 import { Button, ConfidenceTag, Empty, fmtTime, KV, Mono, StatusChip, Tag } from './kit';
 
+const th = 'px-2 py-2 text-[12px] font-medium text-muted';
+const td = 'px-2 py-2 align-top';
+
 export function SegmentDetail({ segmentId }: { segmentId: string }) {
   const { state, assessments } = useStore();
   const [, , go] = useRoute();
@@ -20,7 +23,7 @@ export function SegmentDetail({ segmentId }: { segmentId: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-baseline gap-2">
           <Mono className="text-muted">{seg.id}</Mono>
           <h3 className="text-[15px] font-semibold">{seg.name}</h3>
         </div>
@@ -49,15 +52,15 @@ export function SegmentDetail({ segmentId }: { segmentId: string }) {
         <Button size="sm" icon={<AlertTriangle size={13} />} onClick={() => go('hazards', { segment: seg.id })}>Report hazard on this segment</Button>
       )}
 
-      <div className="border border-line">
-        <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-1.5 bg-surface-2 px-3 py-2 text-left text-[13px] font-semibold">
+      <div className="border-t border-line pt-3">
+        <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-h-8 w-full items-center gap-1.5 text-left text-[13px] font-semibold">
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />} Why this status?
         </button>
         {open && (
-          <div className="space-y-3 p-3">
-            <ol className="list-decimal space-y-1 pl-4 text-[13px]">
+          <div className="mt-2 space-y-3">
+            <ul className="list-disc space-y-1 pl-5 text-[13px] text-muted">
               {a.reasons.map((r, i) => <li key={i}>{r}</li>)}
-            </ol>
+            </ul>
             {(a.duplicates.length > 0 || a.staleIds.length > 0) && (
               <div className="text-[12px] text-muted">
                 {a.duplicates.length > 0 && <div>Duplicates: <Mono>{a.duplicates.join(', ')}</Mono></div>}
@@ -65,24 +68,24 @@ export function SegmentDetail({ segmentId }: { segmentId: string }) {
               </div>
             )}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-[12px]">
+              <table className="w-full min-w-[480px] text-left text-[12px]">
                 <thead>
                   <tr className="border-b border-line">
-                    {['ID', 'Claim', 'Source', 'Trust', 'Age', 'State', 'Origin'].map((h) => <th key={h} className="label-caps px-1.5 py-1 text-[10px]">{h}</th>)}
+                    {['ID', 'Claim', 'Source', 'Trust tier', 'Age', 'Verification', 'Origin'].map((h) => <th key={h} className={th}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {evs.map((e) => {
                     const stale = a.staleIds.includes(e.id);
                     return (
-                      <tr key={e.id} className="border-b border-line/50 last:border-0" style={{ opacity: stale || e.verification === 'rejected' ? 0.55 : 1 }}>
-                        <td className="px-1.5 py-1"><Mono>{e.id}</Mono></td>
-                        <td className="px-1.5 py-1">{e.condition}{e.category ? ` · ${HAZARD_LABEL[e.category]}` : ''}{e.waterLevelCm !== undefined ? ` · ${e.waterLevelCm} cm` : ''}</td>
-                        <td className="px-1.5 py-1">{e.sourceName}</td>
-                        <td className="px-1.5 py-1">{TIER_LABEL[trustTier(e)]}</td>
-                        <td className="px-1.5 py-1 font-mono">{fmtAge((state.now - e.observedAt) / 60000)}{stale ? ' (expired)' : ''}</td>
-                        <td className="px-1.5 py-1">{e.verification}</td>
-                        <td className="px-1.5 py-1 text-faint">{e.origin}</td>
+                      <tr key={e.id} className="border-b border-line/60 last:border-0 hover:bg-surface-2" style={{ opacity: stale || e.verification === 'rejected' ? 0.55 : 1 }}>
+                        <td className={td}><Mono>{e.id}</Mono></td>
+                        <td className={td}>{e.condition}{e.category ? ` · ${HAZARD_LABEL[e.category]}` : ''}{e.waterLevelCm !== undefined ? ` · ${e.waterLevelCm} cm` : ''}</td>
+                        <td className={td}>{e.sourceName}</td>
+                        <td className={td}>{TIER_LABEL[trustTier(e)]}</td>
+                        <td className={td + ' num'}>{fmtAge((state.now - e.observedAt) / 60000)}{stale ? ' (expired)' : ''}</td>
+                        <td className={td}>{e.verification}</td>
+                        <td className={td + ' text-faint'}>{e.origin}</td>
                       </tr>
                     );
                   })}
@@ -94,12 +97,13 @@ export function SegmentDetail({ segmentId }: { segmentId: string }) {
         )}
       </div>
 
-      <div>
-        <div className="label-caps mb-1.5">Status history</div>
-        <ol className="space-y-1.5 border-l border-line pl-3 text-[12.5px]">
+      <div className="border-t border-line pt-3">
+        <h4 className="mb-2 text-[13px] font-semibold">Status history</h4>
+        <ol className="relative ml-1.5 border-l border-line-strong text-[12.5px]">
           {[...seg.history].reverse().slice(0, 10).map((h, i) => (
-            <li key={i}>
-              <span className="font-mono text-faint">{fmtTime(h.at)}</span>{' '}
+            <li key={i} className="relative pb-2.5 pl-4 last:pb-0">
+              <span className="absolute -left-[4px] top-[6px] h-[7px] w-[7px] rounded-full bg-line-strong" aria-hidden />
+              <span className="font-mono text-[11.5px] text-faint">{fmtTime(h.at)}</span>{' '}
               {h.from ? `${STATUS_LABEL[h.from]} → ` : ''}<span className="font-medium">{STATUS_LABEL[h.to]}</span>
               <div className="text-[12px] text-muted">{h.reason}</div>
             </li>

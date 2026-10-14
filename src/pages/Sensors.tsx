@@ -3,7 +3,7 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Too
 import { useStore } from '../state/store';
 import { addSensorReading, audit, can, sensorHealth, setSensorConnected, simulateSensorStep } from '../engine/actions';
 import type { SensorDevice } from '../types';
-import { Button, Field, fmtClock, fmtTime, inputCls, KV, Mono, Notice, PageHeader, Panel, Select, StatusChip, Table, Tag, Toast } from '../ui/kit';
+import { Button, Field, fmtClock, fmtTime, inputCls, KV, Mono, PageHeader, Panel, Select, StatusChip, Table, Tag, Toast } from '../ui/kit';
 
 export default function Sensors() {
   const { state, assessments, update } = useStore();
@@ -31,9 +31,9 @@ export default function Sensors() {
         title="Sensors"
         desc="Water-level sensor adapter. All feeds in this build are simulated; no physical hardware is connected."
       />
-      <Notice tone="warn">
+      <p className="max-w-3xl border-l-2 border-warn pl-3 text-[12.5px] text-muted">
         A water-level reading alone does not establish passability. Readings depend on sensor placement, calibration, road geometry and vehicle type. Alerts open a verification task; they never mark a road passable or blocked on their own.
-      </Notice>
+      </p>
 
       <Panel title="Registered sensors" bodyClass="p-0">
         <Table
@@ -45,7 +45,22 @@ export default function Sensors() {
             { key: 'id', header: 'ID', cell: (s) => <Mono>{s.id}</Mono> },
             { key: 'name', header: 'Name', cell: (s) => s.name },
             { key: 'seg', header: 'Segment', cell: (s) => <span className="flex items-center gap-2"><Mono>{s.segmentId}</Mono>{assessments.get(s.segmentId) && <StatusChip compact status={assessments.get(s.segmentId)!.status} />}</span> },
-            { key: 'thr', header: 'Warn / critical', cell: (s) => <Mono>{s.warnCm} / {s.criticalCm} cm</Mono> },
+            { key: 'thr', header: 'Level vs thresholds', cell: (s) => {
+              const last = state.readings.filter((r) => r.sensorId === s.id).at(-1);
+              const max = s.criticalCm * 1.25;
+              const pct = (n: number) => `${Math.min(100, (n / max) * 100)}%`;
+              const v = last?.valueCm ?? 0;
+              return (
+                <div className="flex items-center gap-2" title={`Warn ${s.warnCm} cm, critical ${s.criticalCm} cm`}>
+                  <div className="relative h-1.5 w-28 bg-surface-2" role="img" aria-label={`Level ${v} cm, warn ${s.warnCm}, critical ${s.criticalCm}`}>
+                    <div className="absolute inset-y-0 left-0" style={{ width: pct(v), background: v >= s.criticalCm ? 'var(--color-crit)' : v >= s.warnCm ? 'var(--color-warn)' : 'var(--color-ok)' }} />
+                    <div className="absolute -inset-y-0.5 w-px bg-warn" style={{ left: pct(s.warnCm) }} />
+                    <div className="absolute -inset-y-0.5 w-px bg-crit" style={{ left: pct(s.criticalCm) }} />
+                  </div>
+                  <span className="num text-[12px] text-faint">{s.warnCm}/{s.criticalCm}</span>
+                </div>
+              );
+            } },
             { key: 'health', header: 'Health', cell: (s) => <HealthTag s={s} /> },
             {
               key: 'last', header: 'Last reading', cell: (s) => {
@@ -54,7 +69,7 @@ export default function Sensors() {
                 return last ? <span><Mono>{last.valueCm} cm</Mono> <span className="text-faint">· {h.lastAt ? fmtClock(h.lastAt) : ''}</span></span> : <span className="text-faint">none</span>;
               },
             },
-            { key: 'hw', header: 'Hardware', cell: (s) => <Tag tone="sim">{s.hardware}</Tag> },
+            { key: 'hw', header: 'Hardware', cell: (s) => <span className="text-faint">{s.hardware}</span> },
           ]}
         />
       </Panel>
@@ -67,7 +82,7 @@ export default function Sensors() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={readings.map((r) => ({ t: fmtClock(r.at), v: r.valueCm }))} margin={{ top: 8, right: 16, bottom: 0, left: -12 }}>
                     <CartesianGrid stroke="var(--color-line)" strokeDasharray="2 4" vertical={false} />
-                    <XAxis dataKey="t" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} stroke="var(--color-line)" />
+                    <XAxis dataKey="t" tick={{ fill: 'var(--color-muted)', fontSize: 11 }} stroke="var(--color-line)" tickLine={false} />
                     <YAxis tick={{ fill: 'var(--color-muted)', fontSize: 11 }} stroke="var(--color-line)" unit=" cm" width={64} />
                     <Tooltip contentStyle={{ background: 'var(--color-raised)', border: '1px solid var(--color-line-strong)', fontSize: 12 }} />
                     <ReferenceLine y={sensor.warnCm} stroke="var(--color-warn)" strokeDasharray="4 4" label={{ value: 'warn', fill: 'var(--color-warn)', fontSize: 11, position: 'insideTopRight' }} />
@@ -93,7 +108,7 @@ export default function Sensors() {
           </Panel>
 
           <div className="space-y-4">
-            <Panel title="Controls">
+            <Panel title="Actions">
               <div className="space-y-3">
                 <Button variant="primary" className="w-full" disabled={!allowed || !sensor.connected} title={denied ?? (!sensor.connected ? 'Sensor disconnected' : undefined)}
                   onClick={() => { update((s) => simulateSensorStep(s, sensor.id)); setToast({ text: `Deterministic simulated reading generated for ${sensor.id}.` }); }}>
@@ -128,7 +143,7 @@ export default function Sensors() {
         <RegisterSensor disabled={!allowed} />
         <Panel title="ESP32 adapter (future hardware)" sub="Not connected in this build">
           <p className="text-[13px] text-muted">A future ESP32 node with a water-level sensor would POST readings over Wi-Fi (or serial bridge) to the adapter. Expected payload:</p>
-          <pre className="mt-2 overflow-x-auto border border-line bg-bg p-3 font-mono text-[12.5px]">{`{
+          <pre className="mt-2 overflow-x-auto rounded-[3px] border border-line bg-bg p-3 font-mono text-[12.5px] text-ink">{`{
   "sensorId": "WL-01",
   "valueCm": 34.5,
   "ts": "2026-10-14T08:45:00+05:30"
@@ -146,7 +161,8 @@ export default function Sensors() {
 
   function HealthTag({ s }: { s: SensorDevice }) {
     const h = sensorHealth(state, s.id);
-    return h.state === 'ok' ? <Tag tone="ok">● reporting</Tag> : h.state === 'disconnected' ? <Tag tone="crit">■ disconnected</Tag> : <Tag tone="warn">▲ missing data</Tag>;
+    const [c, t] = h.state === 'ok' ? ['ok', 'Reporting'] : h.state === 'disconnected' ? ['crit', 'Disconnected'] : ['warn', 'Missing data'];
+    return <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: `var(--color-${c})` }} />{t}</span>;
   }
 }
 

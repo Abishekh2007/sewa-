@@ -9,11 +9,11 @@
 @theme {
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --color-bg: #0c0e12;
-  --color-surface: #12151b;
+  --color-bg: #0b0d10;
+  --color-surface: #101318;
   --color-surface-2: #171b22;
   --color-raised: #1f242d;
-  --color-line: #232833;
+  --color-line: #1f242c;
   --color-line-strong: #313846;
   --color-ink: #e7e9ec;
   --color-muted: #9ba2ad;
@@ -55,14 +55,27 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'tnum' 1;
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  overflow-x: hidden;
 }
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-::selection { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+h1, h2, h3 { letter-spacing: -0.012em; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 * { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
-.label-caps { font-size: 12px; color: var(--color-muted); font-weight: 500; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-track { background: transparent; }
+select { appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 8px center; background-size: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239ba2ad' stroke-width='1.4'/%3E%3C/svg%3E"); }
+select option { background: var(--color-surface); color: var(--color-ink); }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.label-caps { font-size: 12px; color: var(--color-muted); font-weight: 400; }
 .num { font-variant-numeric: tabular-nums; }
 @media print {
   .no-print { display: none !important; }

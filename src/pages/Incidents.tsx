@@ -7,7 +7,7 @@ import {
   type EmergencyIncident, type IncidentCategory, type IncidentStatus, type Priority, type RouteMode, type RouteResult, type Vehicle,
 } from '../types';
 import {
-  Button, Field, KV, Modal, Mono, Notice, PageHeader, Panel, PriorityTag, Select, SimTag, Table, Tag, Toast, cx, fmtTime, inputCls, textareaCls, type Col,
+  Button, Field, KV, Modal, Mono, Notice, PageHeader, Panel, PriorityTag, Select, Toast, cx, fmtTime, inputCls, textareaCls,
 } from '../ui/kit';
 import { RouteResultView } from '../ui/RouteResultView';
 import { NetworkMap } from '../ui/NetworkMap';
@@ -43,17 +43,6 @@ export default function Incidents() {
       .sort((a, b) => (sort === 'priority' ? a.priority.localeCompare(b.priority) || b.reportedAt - a.reportedAt : b.reportedAt - a.reportedAt));
   }, [state.incidents, q, cat, pri, st, sort]);
 
-  const cols: Col<EmergencyIncident>[] = [
-    { key: 'id', header: 'ID', cell: (i) => <Mono>{i.id}</Mono> },
-    { key: 'cat', header: 'Category', cell: (i) => INCIDENT_LABEL[i.category] },
-    { key: 'loc', header: 'Location', cell: (i) => <span>{jName(i.nodeId)} <Mono className="text-faint">{i.nodeId}</Mono></span> },
-    { key: 'pri', header: 'Priority', cell: (i) => <PriorityTag p={i.priority} /> },
-    { key: 'status', header: 'Status', cell: (i) => <Tag tone={ACTIVE.includes(i.status) ? 'accent' : 'neutral'}>{i.status}</Tag> },
-    { key: 'unit', header: 'Unit', cell: (i) => <Mono>{i.assignedUnit ?? '—'}</Mono> },
-    { key: 'time', header: 'Reported', cell: (i) => <span className="whitespace-nowrap text-muted">{fmtTime(i.reportedAt)}</span> },
-    { key: 'sim', header: '', cell: () => <SimTag /> },
-  ];
-
   const inc = state.incidents.find((i) => i.id === selected) ?? null;
   const canInc = can(state.role, 'incident');
   const deny = `Not permitted for ${ROLE_LABEL[state.role]}`;
@@ -61,29 +50,39 @@ export default function Incidents() {
   return (
     <div>
       <PageHeader
-        title="Emergency incidents"
-        desc="Simulated incidents for the fictional Sector R-7 test area. Creating or updating an incident here does not dispatch any real emergency service."
+        title="Incidents"
+        desc="Simulated — no real dispatch. Fictional Sector R-7 test area."
         actions={<Button variant="primary" icon={<Plus size={15} />} disabled={!canInc} title={canInc ? undefined : deny} onClick={() => setShowNew(true)}>New incident</Button>}
       />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,520px)]">
-        <Panel
-          title={`Incidents (${rows.length})`}
-          bodyClass="p-0"
-          actions={
-            <div className="flex flex-wrap gap-1.5">
-              <input aria-label="Search incidents" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className={cx(inputCls, 'h-8 w-36')} />
-              <Select ariaLabel="Category filter" className="h-8 w-36" value={cat} onChange={setCat} options={[{ value: 'all', label: 'All categories' }, ...CATS.map((c) => ({ value: c, label: INCIDENT_LABEL[c] }))]} />
-              <Select ariaLabel="Priority filter" className="h-8 w-24" value={pri} onChange={setPri} options={[{ value: 'all', label: 'All P' }, ...PRIORITIES.map((p) => ({ value: p, label: p }))]} />
-              <Select ariaLabel="Status filter" className="h-8 w-36" value={st} onChange={setSt} options={[{ value: 'all', label: 'All statuses' }, { value: 'active', label: 'Active only' }, ...INCIDENT_STATUSES.map((s) => ({ value: s, label: s }))]} />
-              <Select ariaLabel="Sort" className="h-8 w-32" value={sort} onChange={setSort} options={[{ value: 'priority', label: 'By priority' }, { value: 'time', label: 'Newest first' }]} />
-            </div>
-          }
-        >
-          <Table rows={rows} cols={cols} rowKey={(i) => i.id} onRow={(i) => setSelected(i.id)} selected={selected ?? undefined} />
-        </Panel>
-        {inc ? <IncidentDetail key={inc.id} inc={inc} onToast={setToast} /> : (
-          <Panel title="Incident detail"><p className="text-[13px] text-muted">Select an incident to view its timeline, assign a unit and compute an evidence-aware route.</p></Panel>
-        )}
+      <div className="grid items-start gap-0 border-t border-line xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
+        <section className="min-w-0 xl:border-r xl:border-line">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-line py-2 xl:pr-3">
+            <input aria-label="Search incidents" placeholder="Search incidents" value={q} onChange={(e) => setQ(e.target.value)} className={cx(inputCls, 'h-8 w-40')} />
+            <Select ariaLabel="Category filter" className="h-8 w-32" value={cat} onChange={setCat} options={[{ value: 'all', label: 'All categories' }, ...CATS.map((c) => ({ value: c, label: INCIDENT_LABEL[c] }))]} />
+            <Select ariaLabel="Priority filter" className="h-8 w-24" value={pri} onChange={setPri} options={[{ value: 'all', label: 'All P' }, ...PRIORITIES.map((p) => ({ value: p, label: p }))]} />
+            <Select ariaLabel="Status filter" className="h-8 w-32" value={st} onChange={setSt} options={[{ value: 'all', label: 'All statuses' }, { value: 'active', label: 'Active only' }, ...INCIDENT_STATUSES.map((s) => ({ value: s, label: s }))]} />
+            <Select ariaLabel="Sort" className="h-8 w-28" value={sort} onChange={setSort} options={[{ value: 'priority', label: 'By priority' }, { value: 'time', label: 'Newest first' }]} />
+            <span className="num ml-auto text-[12px] text-muted">{rows.length} shown</span>
+          </div>
+          {rows.length === 0 && <p className="py-6 text-[13px] text-muted">No incidents match the current filters.</p>}
+          <ul>
+            {rows.map((i) => (
+              <li key={i.id}>
+                <button onClick={() => setSelected(i.id)} aria-current={i.id === selected} className={cx('grid min-h-10 w-full grid-cols-[28px_64px_1fr_auto] items-center gap-2 border-b border-line px-1 py-1.5 text-left text-[13px] hover:bg-surface-2 xl:pr-3', i.id === selected && 'bg-surface-2')}>
+                  <PriorityTag p={i.priority} />
+                  <Mono className="text-muted">{i.id}</Mono>
+                  <span className="min-w-0 truncate">{INCIDENT_LABEL[i.category]} <span className="text-muted">· {jName(i.nodeId)}</span></span>
+                  <span className={cx('whitespace-nowrap text-[12px]', ACTIVE.includes(i.status) ? 'text-accent' : 'text-muted')}>{i.status}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <aside className="min-w-0 xl:sticky xl:top-2 xl:max-h-[calc(100vh-1rem)] xl:overflow-y-auto">
+          {inc ? <IncidentDetail key={inc.id} inc={inc} onToast={setToast} /> : (
+            <p className="p-4 text-[13px] text-muted">Select an incident to view its timeline, assign a unit and compute an evidence-aware route.</p>
+          )}
+        </aside>
       </div>
       <NewIncidentModal
         open={showNew}
@@ -167,11 +166,21 @@ function IncidentDetail({ inc, onToast }: { inc: EmergencyIncident; onToast: (t:
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <Panel title={<span className="flex items-center gap-2"><Mono>{inc.id}</Mono> {INCIDENT_LABEL[inc.category]}</span>} sub={`${jName(inc.nodeId)} · reported ${fmtTime(inc.reportedAt)}`} actions={<SimTag />}>
+    <div className="flex min-w-0 flex-col xl:pl-4 [&>section]:border-0 [&>section]:border-b [&>section]:border-line [&>section]:bg-transparent">
+      <div className="border-b border-line py-3">
+        <div className="flex items-center gap-2"><Mono className="text-muted">{inc.id}</Mono><h2 className="text-[16px] font-semibold">{INCIDENT_LABEL[inc.category]}</h2><PriorityTag p={inc.priority} /><span className="ml-auto text-[12px] text-accent">{inc.status}</span></div>
+        <p className="mt-0.5 text-[12px] text-muted">{jName(inc.nodeId)} · reported {fmtTime(inc.reportedAt)}</p>
+        <ol className="mt-3 flex flex-wrap gap-x-1 gap-y-1 text-[12px]" aria-label="Status progress">
+          {INCIDENT_STATUSES.map((s, i) => (
+            <li key={s} className={cx('flex items-center gap-1', i === idx ? 'font-semibold text-ink' : i < idx ? 'text-muted' : 'text-faint')}>
+              <span aria-hidden>{i < idx ? '✓' : i === idx ? '●' : '○'}</span>{s}{i < INCIDENT_STATUSES.length - 1 && <span aria-hidden className="px-1 text-faint">—</span>}
+            </li>
+          ))}
+        </ol>
+      </div>
+      <section className="py-3">
+        <h3 className="mb-2 text-[13px] font-semibold">Details</h3>
         <KV items={[
-          ['Status', <Tag tone="accent">{inc.status}</Tag>],
-          ['Priority', <PriorityTag p={inc.priority} />],
           ['People affected', <Mono>{inc.peopleAffected}</Mono>],
           ['Required vehicle', VEHICLE_LABEL[inc.vehicle]],
           ['Assigned unit', assigned ? `${assigned.name}` : '—'],
@@ -180,10 +189,10 @@ function IncidentDetail({ inc, onToast }: { inc: EmergencyIncident; onToast: (t:
           ...(inc.resolutionNotes ? [['Resolution', inc.resolutionNotes] as [string, string]] : []),
           ...(inc.closureVerifiedBy ? [['Closure verified by', inc.closureVerifiedBy] as [string, string]] : []),
         ]} />
-        <div className="mt-3"><Notice>No real emergency services are dispatched. Assignments are to simulated units.</Notice></div>
-      </Panel>
+        <p className="mt-2 text-[12px] text-faint">Simulated — no real dispatch. Assignments are to simulated units.</p>
+      </section>
 
-      <Panel title="Update">
+      <Panel title="Assignment and status">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Priority"><Select value={edit.priority} onChange={(v) => setEdit({ ...edit, priority: v })} options={PRIORITIES.map((p) => ({ value: p, label: p }))} /></Field>
           <Field label="People affected"><input type="number" min={0} className={inputCls} value={edit.peopleAffected} onChange={(e) => setEdit({ ...edit, peopleAffected: Number(e.target.value) })} /></Field>
@@ -209,7 +218,7 @@ function IncidentDetail({ inc, onToast }: { inc: EmergencyIncident; onToast: (t:
         </div>
       </Panel>
 
-      <Panel title="Route to incident" sub={`From ${jName(origin)} (${assigned ? assigned.id : 'default: response station'}) · ${VEHICLE_LABEL[vehicle]}`}
+      <Panel title="Route" sub={`From ${jName(origin)} (${assigned ? assigned.id : 'default: response station'}) · ${VEHICLE_LABEL[vehicle]}`}
         actions={<>
           <Select ariaLabel="Routing mode" className="h-8 w-48" value={mode} onChange={setMode} options={(Object.keys(MODE_LABEL) as RouteMode[]).map((m) => ({ value: m, label: MODE_LABEL[m] }))} />
           <Button size="sm" variant="primary" icon={<RouteIcon size={14} />} disabled={!canRoute} title={canRoute ? undefined : deny} onClick={computeRoute}>Compute</Button>
@@ -217,7 +226,7 @@ function IncidentDetail({ inc, onToast }: { inc: EmergencyIncident; onToast: (t:
       >
         {route ? (
           <div className="flex flex-col gap-3">
-            <NetworkMap route={route} altIndex={alt} height={300} showIncidents />
+            <NetworkMap route={route} altIndex={alt} height={220} showIncidents />
             <RouteResultView result={route} altIndex={alt} onAltIndex={setAlt} />
           </div>
         ) : inc.lastRoute ? (
@@ -228,7 +237,7 @@ function IncidentDetail({ inc, onToast }: { inc: EmergencyIncident; onToast: (t:
       <Panel title="Timeline">
         <ol className="flex flex-col gap-2">
           {[...inc.timeline].reverse().map((e, i) => (
-            <li key={i} className="grid grid-cols-[110px_1fr] gap-3 text-[13px]"><span className="font-mono text-[12px] text-faint">{fmtTime(e.at)}</span><span>{e.text}</span></li>
+            <li key={i} className="relative grid grid-cols-[110px_1fr] gap-3 border-l border-line-strong pl-3 text-[13px]"><span aria-hidden className="absolute -left-[3px] top-1.5 h-[5px] w-[5px] rounded-full bg-muted" /><span className="font-mono text-[12px] text-faint">{fmtTime(e.at)}</span><span>{e.text}</span></li>
           ))}
         </ol>
       </Panel>

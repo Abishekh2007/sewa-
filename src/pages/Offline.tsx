@@ -33,7 +33,8 @@ export default function Offline() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title="Connection">
           <KV items={[
-            ['Status', offline.online ? <Tag tone="ok">● Online (simulated)</Tag> : <Tag tone="warn">▲ Offline (simulated)</Tag>],
+            ['Status', <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: offline.online ? 'var(--color-ok)' : 'var(--color-warn)' }} />{offline.online ? 'Online' : 'Offline'} <span className="text-faint">(simulated)</span></span>],
+            ['Staleness', ageMin > 60 ? <Tag tone="warn">Cache {fmtAge(ageMin)} old</Tag> : <span className="text-muted">Fresh ({fmtAge(ageMin)})</span>],
             ['Last sync', <span>{fmtTime(offline.lastSyncAt)} <span className="text-faint">({fmtAge(ageMin)} ago)</span></span>],
             ['Queued reports', <Mono>{offline.queue.length}</Mono>],
             ['Remote inbox', <Mono>{offline.remoteInbox.length}</Mono>],
@@ -104,7 +105,7 @@ export default function Offline() {
       </Panel>
 
       <Panel title="Service worker test procedure (real offline loading)">
-        <ol className="list-decimal space-y-1 pl-5 text-[13px] text-muted">
+        <ol className="list-decimal space-y-2 pl-5 text-[13px] text-muted marker:font-mono marker:text-faint">
           <li>Run <Mono>npm run build</Mono> then <Mono>npm run preview</Mono> (the service worker registers in production builds only).</li>
           <li>Open the preview URL once so the app shell is cached.</li>
           <li>DevTools → Network → set throttling to <em>Offline</em>, then reload. The app loads from cache with data from LocalStorage.</li>

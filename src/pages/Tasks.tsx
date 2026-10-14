@@ -6,7 +6,7 @@ import {
   HAZARD_LABEL, ROLE_LABEL, SOURCE_LABEL, TASK_STATUSES, VEHICLES, VEHICLE_LABEL,
   type HazardCategory, type ObservedCondition, type Priority, type TaskStatus, type Vehicle, type VerificationTask,
 } from '../types';
-import { Button, ConfirmDialog, Field, KV, Mono, Notice, PageHeader, Panel, PriorityTag, Select, StatusChip, Table, Tag, Toast, cx, fmtTime, inputCls, textareaCls, type Col } from '../ui/kit';
+import { Button, ConfirmDialog, Field, KV, Mono, Notice, PageHeader, Panel, PriorityTag, Select, StatusChip, Tag, Toast, cx, fmtTime, inputCls, textareaCls } from '../ui/kit';
 
 const REASONS: VerificationTask['reason'][] = ['conflict', 'unverified_hazard', 'stale', 'sensor_alert', 'legacy_id', 'offline_conflict'];
 const REASON_LABEL: Record<VerificationTask['reason'], string> = {
@@ -27,31 +27,54 @@ export default function Tasks() {
     .filter((t) => reason === 'all' || t.reason === reason)
     .sort((a, b) => (Number(isOpenTask(b)) - Number(isOpenTask(a))) || a.dueAt - b.dueAt), [state.tasks, st, pri, reason]);
 
-  const cols: Col<VerificationTask>[] = [
-    { key: 'id', header: 'Task', cell: (t) => <Mono>{t.id}</Mono> },
-    { key: 'seg', header: 'Segment', cell: (t) => <Mono>{t.segmentId}</Mono> },
-    { key: 'reason', header: 'Reason', cell: (t) => REASON_LABEL[t.reason] },
-    { key: 'pri', header: 'Priority', cell: (t) => <PriorityTag p={t.priority} /> },
-    { key: 'st', header: 'Status', cell: (t) => <Tag tone={t.status === 'Verified' ? 'ok' : t.status === 'Escalated' ? 'crit' : t.status === 'Rejected' ? 'neutral' : 'accent'}>{t.status}</Tag> },
-    { key: 'who', header: 'Assignee', cell: (t) => <span className="text-muted">{t.assignee ?? 'Unassigned'}</span> },
-    { key: 'due', header: 'Due', cell: (t) => <span className={cx('whitespace-nowrap font-mono text-[12px]', isOpenTask(t) && t.dueAt < state.now ? 'text-crit' : 'text-muted')}>{fmtTime(t.dueAt)}{isOpenTask(t) && t.dueAt < state.now ? ' · OVERDUE' : ''}</span> },
-  ];
+  const GROUPS: TaskStatus[] = ['Pending', 'Assigned', 'In progress', 'Escalated'];
+  const groupOf = (g: TaskStatus) => rows.filter((r) => r.status === g);
+  const resolved = rows.filter((r) => !GROUPS.includes(r.status));
+  const [showRes, setShowRes] = useState(false);
+  const row = (t: VerificationTask) => {
+    const over = isOpenTask(t) && t.dueAt < state.now;
+    return (
+      <li key={t.id}>
+        <button onClick={() => setSel(t.id)} aria-current={t.id === sel} className={cx('grid min-h-10 w-full grid-cols-[28px_56px_64px_1fr_auto] items-center gap-2 border-b border-line px-1 py-1.5 text-left text-[13px] hover:bg-surface-2 xl:pr-3', t.id === sel && 'bg-surface-2')}>
+          <PriorityTag p={t.priority} />
+          <Mono className="text-muted">{t.id}</Mono>
+          <Mono>{t.segmentId}</Mono>
+          <span className="min-w-0 truncate">{REASON_LABEL[t.reason]}</span>
+          <span className={cx('whitespace-nowrap font-mono text-[12px]', over ? 'text-crit' : 'text-muted')}>{fmtTime(t.dueAt)}{over ? ' · overdue' : ''}</span>
+        </button>
+      </li>
+    );
+  };
   const task = state.tasks.find((t) => t.id === sel);
 
   return (
     <div>
       <PageHeader title="Verification tasks" desc="Created automatically when evidence is conflicting, stale, unverified or sensor-triggered. A verified result becomes high-trust evidence and immediately changes routing inputs." />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,480px)]">
-        <Panel title={`Tasks (${rows.length})`} bodyClass="p-0" actions={
-          <div className="flex flex-wrap gap-1.5">
+      <div className="grid items-start border-t border-line xl:grid-cols-[minmax(0,1fr)_minmax(0,520px)]">
+        <section className="min-w-0 xl:border-r xl:border-line">
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-line py-2 xl:pr-3">
             <Select ariaLabel="Status" className="h-8 w-32" value={st} onChange={setSt} options={[{ value: 'open', label: 'Open' }, { value: 'all', label: 'All' }, ...TASK_STATUSES.map((s) => ({ value: s, label: s }))]} />
             <Select ariaLabel="Priority" className="h-8 w-24" value={pri} onChange={setPri} options={[{ value: 'all', label: 'All P' }, ...(['P1', 'P2', 'P3', 'P4'] as const).map((p) => ({ value: p, label: p }))]} />
             <Select ariaLabel="Reason" className="h-8 w-40" value={reason} onChange={setReason} options={[{ value: 'all', label: 'All reasons' }, ...REASONS.map((r) => ({ value: r, label: REASON_LABEL[r] }))]} />
+            <span className="num ml-auto text-[12px] text-muted">{rows.length} tasks</span>
           </div>
-        }>
-          <Table rows={rows} cols={cols} rowKey={(t) => t.id} onRow={(t) => setSel(t.id)} selected={sel ?? undefined} empty="No verification tasks match the filters." />
-        </Panel>
-        {task ? <TaskDetail key={task.id} task={task} onToast={setToast} update={update} /> : <Panel title="Task detail"><p className="text-[13px] text-muted">Select a task to assign, inspect, verify, reject or escalate it.</p></Panel>}
+          {rows.length === 0 && <p className="py-6 text-[13px] text-muted">No verification tasks match the filters.</p>}
+          {GROUPS.map((g) => groupOf(g).length > 0 && (
+            <div key={g}>
+              <h2 className="border-b border-line bg-surface-2 px-1 py-1 text-[12px] font-semibold text-muted">{g} <span className="num font-normal">({groupOf(g).length})</span></h2>
+              <ul>{groupOf(g).map(row)}</ul>
+            </div>
+          ))}
+          {resolved.length > 0 && (
+            <div>
+              <button onClick={() => setShowRes(!showRes)} aria-expanded={showRes} className="w-full border-b border-line bg-surface-2 px-1 py-1 text-left text-[12px] font-semibold text-muted">{showRes ? '▾' : '▸'} Resolved <span className="num font-normal">({resolved.length})</span></button>
+              {showRes && <ul>{resolved.map(row)}</ul>}
+            </div>
+          )}
+        </section>
+        <aside className="min-w-0 xl:sticky xl:top-2 xl:max-h-[calc(100vh-1rem)] xl:overflow-y-auto">
+          {task ? <TaskDetail key={task.id} task={task} onToast={setToast} update={update} /> : <p className="p-4 text-[13px] text-muted">Select a task to assign, inspect, verify, reject or escalate it.</p>}
+        </aside>
       </div>
       <Toast msg={toast} onDone={() => setToast(null)} />
     </div>
@@ -76,7 +99,7 @@ function TaskDetail({ task, onToast, update }: { task: VerificationTask; onToast
   const affected = state.incidents.filter((i) => i.lastRoute && i.status !== 'Closed' && (i.lastRoute.segments.includes(task.segmentId) || !i.lastRoute.found));
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col xl:pl-4 [&>section]:border-0 [&>section]:border-b [&>section]:border-line [&>section]:bg-transparent">
       <Panel title={<span className="flex items-center gap-2"><Mono>{task.id}</Mono> {REASON_LABEL[task.reason]}</span>} sub={`${seg.id} ${seg.name}`} actions={a && <StatusChip status={a.status} />}>
         <KV items={[
           ['Priority', <PriorityTag p={task.priority} />],
@@ -109,7 +132,7 @@ function TaskDetail({ task, onToast, update }: { task: VerificationTask; onToast
         ) : <p className="p-3.5 text-[13px] text-muted">No linked evidence.</p>}
       </Panel>
 
-      <Panel title="Actions">
+      <Panel title="Actions: assign, inspect, note, verify, escalate">
         <div className="flex flex-col gap-4">
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <Field label="Assign to (synthetic personnel)"><Select value={assignee} onChange={setAssignee} options={[{ value: '', label: 'Select…' }, ...state.personnel.map((p) => ({ value: p, label: p }))]} /></Field>
@@ -127,7 +150,7 @@ function TaskDetail({ task, onToast, update }: { task: VerificationTask; onToast
           </div>
           {open && (
             <div className="grid gap-3 border-t border-line pt-3">
-              <div className="label-caps">Record verified road condition</div>
+              <div className="text-[13px] font-semibold">Verify road condition</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <Field label="Observed condition"><Select<ObservedCondition> value={cond} onChange={setCond} options={[{ value: 'passable', label: 'Passable (verified)' }, { value: 'hazard', label: 'Hazard present' }, { value: 'blocked', label: 'Blocked' }]} /></Field>
                 {cond !== 'passable' && <Field label="Hazard category"><Select value={cat} onChange={setCat} options={(Object.keys(HAZARD_LABEL) as HazardCategory[]).map((c) => ({ value: c, label: HAZARD_LABEL[c] }))} /></Field>}

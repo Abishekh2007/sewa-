@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import { useStore } from '../state/store';
 import type { AuditEvent, AuditType } from '../types';
-import { Button, fmtTime, inputCls, Mono, Notice, PageHeader, Panel, Select, Table, Tag } from '../ui/kit';
+import { Button, fmtTime, inputCls, Mono, PageHeader, Panel, Select, Table, Tag } from '../ui/kit';
 import { downloadCsv, iso } from '../utils/csv';
 
 const PAGE = 50;
@@ -30,7 +30,7 @@ export default function Audit() {
         desc="Append-only event history with provenance for every report, status change, verification, assignment, route calculation, sensor alert and sync."
         actions={<Button icon={<Download size={14} />} onClick={() => downloadCsv('audit-trail.csv', rows.map((a) => ({ ...a, at: iso(a.at), wallAt: iso(a.wallAt) })))}>Export CSV</Button>}
       />
-      <Notice>Stored in browser LocalStorage. This log is append-only by convention in this app, but it is NOT tamper-proof. A real deployment needs server-side, access-controlled storage.</Notice>
+      <p className="text-[12px] text-faint">Stored in browser LocalStorage. Append-only by convention, but not tamper-proof; a real deployment needs server-side, access-controlled storage.</p>
       <Panel
         title={`${rows.length} event(s)`}
         actions={
@@ -47,12 +47,12 @@ export default function Audit() {
           rowKey={(a) => a.id}
           cols={[
             { key: 'id', header: 'Event', cell: (a) => <Mono>{a.id}</Mono> },
-            { key: 'at', header: 'Sim time', cell: (a) => <span className="whitespace-nowrap">{fmtTime(a.at)}</span> },
+            { key: 'at', header: 'Sim time', cell: (a) => <span className="whitespace-nowrap font-mono text-[12px]">{fmtTime(a.at)}</span> },
             { key: 'type', header: 'Type', cell: (a) => <Tag>{a.type.replace(/_/g, ' ')}</Tag> },
             { key: 'rec', header: 'Record', cell: (a) => <Mono>{a.recordId}</Mono> },
             { key: 'src', header: 'Source', cell: (a) => <span className="whitespace-nowrap text-muted">{a.source} · {a.actor}</span> },
             { key: 'd', header: 'Details', cell: (a) => a.details },
-            { key: 'w', header: 'Wall clock', cell: (a) => <span className="whitespace-nowrap text-faint">{fmtTime(a.wallAt)}</span> },
+            { key: 'w', header: 'Wall clock', cell: (a) => <span className="whitespace-nowrap font-mono text-[12px] text-faint">{fmtTime(a.wallAt)}</span> },
           ]}
         />
         <div className="flex items-center justify-between border-t border-line px-3 py-2 text-[12.5px] text-muted">

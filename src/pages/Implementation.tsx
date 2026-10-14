@@ -3,7 +3,7 @@ import { Download, Plus } from 'lucide-react';
 import { useStore } from '../state/store';
 import { audit, can } from '../engine/actions';
 import type { CostItem } from '../types';
-import { Button, ConfirmDialog, inputCls, Mono, Notice, PageHeader, Panel, Select, Table } from '../ui/kit';
+import { Button, ConfirmDialog, inputCls, Mono, PageHeader, Panel, Select, Table } from '../ui/kit';
 import { downloadCsv } from '../utils/csv';
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
@@ -59,7 +59,7 @@ export default function Implementation() {
         desc="Editable assumptions for a phased, low-cost deployment path."
         actions={<Button icon={<Download size={14} />} onClick={() => downloadCsv('cost-estimates.csv', state.costs.map((c) => ({ ...c, totalInr: c.qty * c.unitInr })))}>Export CSV</Button>}
       />
-      <Notice tone="warn">All prices are estimates that need verification. They are not supplier quotations.</Notice>
+      <p className="text-[12px] text-faint">All prices are estimates that require verification. They are not supplier quotations.</p>
 
       <Panel title="Cost assumptions" actions={<Button size="sm" icon={<Plus size={13} />} disabled={!allowed} title={deny} onClick={add}>Add row</Button>} bodyClass="p-0">
         <Table
@@ -99,13 +99,18 @@ export default function Implementation() {
         </Panel>
       </div>
 
-      <Panel title="Phased implementation plan" bodyClass="p-0">
-        <Table rows={PHASES} rowKey={(r) => r[0]} cols={[
-          { key: 'p', header: 'Phase', cell: (r) => <Mono>{r[0]}</Mono> },
-          { key: 't', header: 'Scope', cell: (r) => <span className="font-medium">{r[1]}</span> },
-          { key: 'd', header: 'Description', cell: (r) => <span className="text-muted">{r[2]}</span> },
-        ]} />
-      </Panel>
+      <section>
+        <h2 className="mb-2 text-[14px] font-semibold">Phased implementation plan</h2>
+        <ol className="border-l border-line-strong pl-5">
+          {PHASES.map((p, i) => (
+            <li key={p[0]} className="relative pb-4 last:pb-0">
+              <span aria-hidden className={`absolute -left-[25px] top-1.5 h-2 w-2 rounded-full border border-line-strong ${i === 0 ? 'bg-ok' : 'bg-bg'}`} />
+              <div className="flex flex-wrap items-baseline gap-x-2"><span className="font-mono text-[12px] text-faint">{p[0]}</span><span className="text-[13.5px] font-medium">{p[1]}</span></div>
+              <p className="max-w-3xl text-[13px] text-muted">{p[2]}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
       <Panel title="Risks & mitigations" bodyClass="p-0">
         <Table rows={RISKS} rowKey={(r) => r[0]} cols={[
           { key: 'r', header: 'Risk', cell: (r) => <span className="font-medium">{r[0]}</span> },
