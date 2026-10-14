@@ -22,7 +22,7 @@ destination: youtube
 aspect: 1920x1080
 language: en
 audience: "Competition judges (SEVA First Innovation Challenge 2026, Theme 5: Surakshit Bharat) — engineers and emergency-management reviewers"
-length: 75s
+length: 45s
 angle: show — site tour following one flood-day story
 ---
 
@@ -41,9 +41,8 @@ with invented UI).
 
 ## Customizations
 
-- Oversized cursor on clicks that matter (Start scenario, Why this status?, Verify).
+- Oversized cursor on the Start scenario clicks.
 - Callout labels drawn over captured screens to point at the changing road and the route line.
-- Count-up only on figures measured in the app (see Notes).
 - On-screen captions carry the story; voice-over optional (see VO draft). The video must work muted.
 
 ## Notes
@@ -64,32 +63,28 @@ with invented UI).
 - **Places on the map (fictional):** Emergency Response Station (west), District Hospital (east), river crossed by the Main Bridge (S03), Upper Bridge (S08) and Low Causeway (S15); Eastern Colony; South Gate meeting point.
 - The app state persists in browser storage. Use **Reset** (top bar) before capturing to start from the seeded state. The simulated clock starts at 08:30.
 
-## Shot list (capture at 1920×1080, dark theme)
+## Shot list — 45 s, 6 beats (capture at 1920×1080, dark theme)
+
+Kept deliberately short to limit usage: 6 captured screens, one composition per beat, no extra beats.
 
 Hash routes deep-link: `http://localhost:4173/#/<page>`. The demo states come from **#/demo → pick scenario → Start scenario**; the scenario sheet then shows the map with the route and the route result.
 
 | # | Beat (≈s) | Where / what to do | What the frame must show |
 |---|---|---|---|
-| 1 | Hook (0–6) | Title card (no capture) | "Navigation finds a route. Rescue needs proof the road is passable." |
-| 2 | Overview (6–14) | `#/dashboard` after Reset | Network-condition bar (34 cells), key figures, map |
-| 3 | Map (14–20) | `#/map` | Cartographic map: river, bridges, legend. Slow push-in |
-| 4 | Flood (20–32) | `#/demo` → **01 Flood blocks the fastest route** → Start | Main Bridge S03 turns red Blocked; route redraws over another crossing; "Avoids 1 confirmed blocked segment" |
-| 5 | Conflict (32–42) | **02 Conflicting reports** → Start; then `#/map?segment=S15` → expand **Why this status?** | Orange Conflicting on the causeway; both reports kept; verification task created |
-| 6 | Fail-safe (42–52) | **04 No adequately verified route** → Start | Red-bordered "NO ADEQUATELY VERIFIED ROUTE FOUND", excluded crossings listed, recommend human verification |
-| 7 | Last mile (52–58) | **05 Alternative access point** → Start | Meeting point (South Gate) highlighted, remaining distance, "Requires human confirmation" |
-| 8 | Reopen (58–66) | **08 Hazard cleared** → Start (optionally show `#/tasks` Verify) | Road back to green Verified passable; route recalculated over the bridge |
-| 9 | Proof (66–72) | `#/analytics` → Run evaluation; quick cuts of `#/sensors`, `#/offline` | Pass counts, baseline comparison; sensor alert; offline queue |
-| 10 | Close (72–75) | End card | Tagline + "Simulated prototype · fictional data · decision support for trained responders" |
+| 1 | Hook (0–4) | Title card (no capture) | "Navigation finds a route. Rescue needs proof the road is passable." |
+| 2 | Overview (4–11) | `#/dashboard` after Reset | Network-condition bar (34 cells), key figures, map |
+| 3 | Flood reroute (11–21) | `#/demo` → **01 Flood blocks the fastest route** → Start | Main Bridge S03 turns red Blocked; route redraws over another crossing |
+| 4 | Fail-safe (21–31) | **04 No adequately verified route** → Start | Red-bordered "NO ADEQUATELY VERIFIED ROUTE FOUND"; nearest reachable meeting point offered for human confirmation |
+| 5 | Reopen (31–39) | **08 Hazard cleared** → Start | Road back to green Verified passable; route recalculated over the bridge |
+| 6 | Close (39–45) | End card; may overlay the pass counts from `#/analytics` (Run evaluation) | Tagline + "8/8 scenarios · 27/27 test cases · simulated prototype, fictional data" |
 
-Optional extra beats if length allows: **03 Stale evidence** (clock +6 h, roads turn indigo Stale); **06 Offline synchronization**; **07 Sensor alert**.
+Do not add the conflict, stale, offline or sensor beats. They are cut for length.
 
-## Optional voice-over draft (≈75 s, restructure freely)
+## Optional voice-over draft (≈45 s)
 
-> When a flood hits, the shortest route isn't the question. The question is: which roads do we actually have evidence for?
-> RAKSHA-PATH X tracks every road in the network as verified, hazardous, blocked, unknown, stale, or conflicting, with the evidence behind each.
+> When a flood hits, the shortest route isn't the question. The question is: which roads do we have evidence for?
+> RAKSHA-PATH X tracks every road as verified, hazardous, blocked, unknown, stale or conflicting, with the evidence behind each.
 > The main bridge floods. It's confirmed blocked, and the route moves to a crossing that's still verified.
-> Two reports disagree about the causeway. Neither one is trusted automatically: both are kept, and a field verifier is tasked.
-> When every crossing is blocked, the system doesn't invent a route. It says so, and finds the nearest reachable meeting point for responders to confirm.
+> When every crossing is blocked, it doesn't invent a route. It says so, and offers the nearest reachable meeting point.
 > Once the bridge is inspected and reopened, routes recalculate immediately.
-> Every scenario here is reproducible and tested against a plain shortest-path baseline.
 > RAKSHA-PATH X. Every route needs evidence.
