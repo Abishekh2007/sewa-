@@ -140,7 +140,12 @@ def set_shape_text(shape, text, color=None):
 for slide in list(S)[1:6]:
     for sh in slide.shapes:
         if sh.has_text_frame and sh.text_frame.text.strip() == "Your Team Name":
-            set_shape_text(sh, "[Team Name]", PLACE)
+            set_shape_text(sh, "RAKSHA-")
+            para = sh.text_frame.paragraphs[0]
+            para.add_line_break()
+            r2 = para.add_run(); r2.text = "PATHX-100"
+            for r in para.runs:
+                r.font.size = Pt(11); r.font.bold = True
         elif sh.has_text_frame and "Template" in sh.text_frame.text:
             set_shape_text(sh, "SEVA FIRST INNOVATION CHALLENGE 2026")
 
@@ -148,13 +153,14 @@ for slide in list(S)[1:6]:
 s1 = S[0]
 tb = shape_named(s1, "TextBox 9")
 tb.width = Inches(7.4)
+tb.top = Inches(2.1)
 values = {
     "Problem Statement ID": ("[PS ID]", True),
-    "Problem Statement Title": ("[PS Title]", True),
+    "Problem Statement Title": ("RAKSHA-PATH X: Intelligent Emergency Route Optimization and Real-Time Disaster Road Intelligence System", False),
     "Theme": ("Surakshit Bharat (Theme 5)", False),
     "PS Category": None,
     "Team ID": ("[Team ID]", True),
-    "Team Name": ("[Team Name]", True),
+    "Team Name": ("RAKSHA-PATHX-100", False),
 }
 for p in tb.text_frame.paragraphs:
     p.alignment = PP_ALIGN.LEFT
@@ -179,9 +185,15 @@ for p in tb.text_frame.paragraphs:
                 p.runs[0].text = label + " "
                 for r in p.runs[1:]:
                     r._r.getparent().remove(r._r)
-                r = p.add_run(); r.text = text
-                r.font.bold = False; r.font.size = Pt(16); r.font.name = "Arial"
-                r.font.color.rgb = PLACE if is_place else INK
+                parts = [text] if len(text) <= 40 else ["RAKSHA-PATH X:", "Intelligent Emergency Route Optimization and", "Real-Time Disaster Road Intelligence System"]
+                for i, part in enumerate(parts):
+                    if i:
+                        p.add_line_break()
+                    r = p.add_run(); r.text = part
+                    r.font.bold = False; r.font.size = Pt(14 if len(parts) > 1 else 16); r.font.name = "Arial"
+                    r.font.color.rgb = PLACE if is_place else INK
+                if len(parts) > 1:
+                    p.line_spacing = 1.0
             break
 
 # ---------- slide 2: idea title / proposed solution ----------
@@ -388,7 +400,7 @@ for i, (t, link) in enumerate(refs, 1):
     items.append({"runs": runs, "size": 11, "after": 5})
 items.append({"runs": [("7. ", {"bold": True, "color": NAVY}), ("[Add any other papers / articles the team consulted]", {"color": PLACE})], "size": 11, "after": 10})
 items.append({"text": "Prototype", "size": 13, "bold": True, "color": NAVY, "after": 4})
-items.append({"runs": [("Source code: ", {"bold": True}), ("[GitHub repository URL]", {"color": PLACE})], "size": 11, "after": 3})
+items.append({"runs": [("Source code: ", {"bold": True}), ("https://github.com/Abishekh2007/sewa-", {"color": BLUE})], "size": 11, "after": 3})
 items.append({"runs": [("Demo video: ", {"bold": True}), ("[Demo video URL]", {"color": PLACE})], "size": 11, "after": 3})
 textbox(s6, 6.05, 2.6, 6.9, 4.2, items)
 
