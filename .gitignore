@@ -4,3 +4,4 @@ node_modules/
 .vscode/
 coverage/
 # dist/ is committed on purpose so "RAKSHA-PATH X.exe" runs without Node.js
+~$*

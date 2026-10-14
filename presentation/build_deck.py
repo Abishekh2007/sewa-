@@ -397,11 +397,9 @@ for i, (t, link) in enumerate(refs, 1):
     runs = [(f"{i}. ", {"bold": True, "color": NAVY}), (t, {})]
     if link:
         runs.append(("  " + link, {"color": BLUE}))
-    items.append({"runs": runs, "size": 11, "after": 5})
-items.append({"runs": [("7. ", {"bold": True, "color": NAVY}), ("[Add any other papers / articles the team consulted]", {"color": PLACE})], "size": 11, "after": 10})
+    items.append({"runs": runs, "size": 11, "after": 10 if i == len(refs) else 5})
 items.append({"text": "Prototype", "size": 13, "bold": True, "color": NAVY, "after": 4})
 items.append({"runs": [("Source code: ", {"bold": True}), ("https://github.com/Abishekh2007/sewa-", {"color": BLUE})], "size": 11, "after": 3})
-items.append({"runs": [("Demo video: ", {"bold": True}), ("[Demo video URL]", {"color": PLACE})], "size": 11, "after": 3})
 textbox(s6, 6.05, 2.6, 6.9, 4.2, items)
 
 # ---------- drop the template's "Important instructions" slide ----------
